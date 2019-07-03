@@ -12,6 +12,7 @@ vim/plugged
 Session.vim
 Sessionx.vim
 .netrwhist
+.netrwbook
 *~
 tags
 [._]*.un~
