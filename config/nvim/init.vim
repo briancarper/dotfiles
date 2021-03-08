@@ -69,7 +69,7 @@ Plug 'ayu-theme/ayu-vim'
 Plug 'https://gitlab.com/protesilaos/tempus-themes-vim.git'
 
 " for snippets
-Plug 'SirVer/ultisnips'
+" Plug 'SirVer/ultisnips'
 
 call plug#end()
 " }}}
