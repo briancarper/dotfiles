@@ -29,8 +29,15 @@
 	 :map ivy-switch-buffer-map
 	 ("C-j" . ivy-next-line)
 	 ("C-k" . ivy-previous-line))
-  :config (ivy-mode 1))
+  :init
+  (ivy-mode 1)
 
+  :config
+  (setq ivy-wrap t))
+
+(use-package ivy-rich
+  :init (ivy-rich-mode 1)
+  :after counsel)
 
 ;; swiper (search)
 (use-package swiper
@@ -126,13 +133,21 @@
 
 (use-package projectile
   :diminish projectile-mode
-  :config (projectile-mode)
+  :config (projectile-mode +1)
   :bind-keymap ("M-P" . projectile-command-map)
   :init
-  (let ((cdaddr/project-path "~/Local"))
-    (when (file-directory-p cdaddr/project-path)
-      (setq projectile-project-search-path cdaddr/project-path)))
-  (setq projectile-switch-project-action #'projectile-dired))
+  (setq projectile-project-search-path '("~/Local"))
+  ;; :init
+  ;; (let ((cdaddr/project-path "~/Local"))
+  ;;   (when (file-directory-p cdaddr/project-path)
+  ;;     (setq projectile-project-search-path cdaddr/project-path)))
+  ;; (setq projectile-switch-project-action #'projectile-dired)
+  )
+
+(use-package rainbow-mode
+  :config (rainbow-mode 1))
+
+(setq default-directory "~/")
 
 ;; make UI tolerable
 (setq inhibit-startup-message t)
@@ -143,13 +158,13 @@
 (menu-bar-mode -1)
 (setq ring-bell-function 'ignore)
 
- (defun my-terminal-visible-bell ()
-   "A friendlier visual bell effect."
-   (invert-face 'mode-line)
-   (run-with-timer 0.1 nil 'invert-face 'mode-line))
- 
- (setq visible-bell       nil
-       ring-bell-function #'my-terminal-visible-bell)
+(defun my-terminal-visible-bell ()
+  "A friendlier visual bell effect."
+  (invert-face 'mode-line)
+  (run-with-timer 0.1 nil 'invert-face 'mode-line))
+
+(setq visible-bell       nil
+      ring-bell-function #'my-terminal-visible-bell)
 
 ;; line numbers and column numbers
 (column-number-mode)
@@ -161,11 +176,10 @@
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
 ;; font
-(set-face-attribute 'default nil :font "Fira Code" :height 148)
+(set-face-attribute 'default nil :font "JetBrainsMono NF" :height 148)
 
 ;; key bindings
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-
 
 (defconst cdaddr/cache-path (expand-file-name "emacs" (or (getenv "XDG_CACHE_HOME") "~/.cache")))
 (make-directory cdaddr/cache-path t)
@@ -194,9 +208,16 @@
   (global-set-key (kbd "<end>") 'end-of-line)
   (add-to-list 'default-frame-alist '(top . 0))
   (add-to-list 'default-frame-alist '(left . 0))
-  (add-to-list 'default-frame-alist '(height . 70))
-  (add-to-list 'default-frame-alist '(width . 164))
-  )
+  (add-to-list 'default-frame-alist '(height . 95))
+  (add-to-list 'default-frame-alist '(width . 184)))
+
+(defun cdaddr/prog-hook ()
+  (line-number-mode 1))
+(add-hook 'prog-mode-hook 'cdaddr/prog-hook)
+
+(defun cdaddr/elisp-hook ()
+  (local-set-key (kbd "C-c C-k") 'eval-buffer))
+(add-hook 'emacs-lisp-mode-hook 'cdaddr/elisp-hook)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -204,7 +225,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(projectile evil-collection which-key use-package rainbow-delimiters ivy-rich helpful github-theme general evil doom-themes doom-modeline diminish counsel command-log-mode)))
+   '(rainbow-mode projectile evil-collection which-key use-package rainbow-delimiters ivy-rich helpful github-theme general evil doom-themes doom-modeline diminish counsel command-log-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
