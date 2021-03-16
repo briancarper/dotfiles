@@ -49,5 +49,9 @@ projectile-bookmarks.eld
 /network-security.data
 
 .last-package-update-day
+places
+projectile.cache
+recentf
+var/prescient-save.el
 
 
