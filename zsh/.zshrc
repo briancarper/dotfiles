@@ -104,10 +104,6 @@ if type fdfind &>/dev/null && ! type fd &>/dev/null; then
     alias fd=fdfind
 fi
 
-if [[ $(command dircolors) && -f "$HOME/.dir_colors" ]]; then
-    eval $(dircolors "$HOME/.dir_colors")
-fi
-
 # must go at end of file
 # source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh
 
@@ -147,6 +143,8 @@ alias vim=nvim
 alias rgi='rg -i'
 
 export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git --exclude '*~'"
+
+eval "$(dircolors $ZDOTDIR/DIR_COLORS)"
 
 [[ -f "$XDG_CONFIG_HOME/.aliases" ]] && source "$XDG_CONFIG_HOME/.aliases"
 
