@@ -27,43 +27,40 @@
 ;; fade mode names in modeline
 (use-package diminish)
 
+(use-package saveplace
+  :config (save-place-mode))
+
+(use-package selectrum
+  :config (selectrum-mode +1))
+
+;; (use-package ctrlf
+;;   :config (ctrlf-mode +1))
+
+(use-package selectrum-prescient
+  :after selectrum
+  :init (setq selectrum-prescient-enable-filtering nil)
+  :config
+  (selectrum-prescient-mode +1)
+  (prescient-persist-mode +1))
+
+(use-package orderless
+  :after selectrum
+  :config
+  (setq completion-styles '(orderless))
+  (setq selectrum-highlight-candidates-function #'orderless-highlight-matches))
+
 ;; recent files
 (use-package recentf
-  :init (recentf-mode 1))
-
-;; command completion
-(use-package ivy
-  :diminish
-  :after counsel
-  :bind (("C-s" . swiper)
-	 :map ivy-minibuffer-map
-	 ("C-j" . ivy-next-line)
-	 ("C-k" . ivy-previous-line)
-	 :map ivy-switch-buffer-map
-	 ("C-j" . ivy-next-line)
-	 ("C-k" . ivy-previous-line))
-  :init
-  (ivy-mode 1)
-
-  :config
-  (setq ivy-wrap t)
-  (add-to-list 'ivy-sort-functions-alist
-	       '(counsel-projectile-find-file . file-newer-than-file-p)
-	       '(counsel-buffer-or-recentf . file-newer-than-file-p)))
-
-;; ivy enhancements
-(use-package ivy-rich
-  :init (ivy-rich-mode 1)
-  :after counsel)
+  :config (recentf-mode 1))
 
 ;; custom menus
 (use-package hydra
   :defer t)
 
 ;; search
-(use-package swiper
-  :diminish
-  :bind (("C-s" . 'swiper)))
+;; (use-package swiper
+;;   :diminish
+;;   :bind (("C-s" . 'swiper)))
 
 ;; undo for vim
 (use-package undo-tree
@@ -88,8 +85,6 @@
   :config
   (evil-mode 1)
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-  ;; (define-key evil-normal-state-map (kbd "/") 'swiper)
-  (define-key evil-normal-state-map (kbd "M-f") 'swiper)
   (evil-set-undo-system 'undo-tree)
   (add-hook 'evil-mode-hook 'cdaddr/evil-hook))
 
@@ -102,11 +97,11 @@
 ;;   be sure to run M-x all-the-icons-install-fonts
 (use-package all-the-icons)
 (use-package doom-modeline
-  :init (doom-modeline-mode 1))
+  :config (doom-modeline-mode 1))
 
 ;; themes
 (use-package doom-themes
-  :init (load-theme 'doom-one-light t))
+  :config (load-theme 'doom-one-light t))
 
 ;; rainbow delimiters
 (use-package rainbow-delimiters
@@ -114,41 +109,17 @@
 
 ;; command preview
 (use-package which-key
-  :init (which-key-mode)
   :diminish which-key-mode
-  :config (setq which-key-idle-delay 0.1))
-
-;; ivy-enhanced common commands
-(use-package counsel
-  :diminish
-  :bind (("M-x" . counsel-M-x)
-	 ("C-x b" . counsel-ibuffer)
-	 ("C-x C-f" . counsel-find-file)
-	 :map minibuffer-local-map
-	 ("C-r" . counsel-minibuffer-history))
-  :config (setq ivy-initial-inputs-alist nil))
-
-;; ivy menu descriptions
-(use-package ivy-rich
-  :after ivy
-  :init (ivy-rich-mode 1))
-
-;; (use-package ivy-prescient
-;;   :after counsel
-;;   :custom
-;;   (ivy-prescient-enable-filtering nil)
-;;   :config
-;;   (ivy-prescient-mode 1))
+  :config
+  (which-key-mode)
+  (setq which-key-idle-delay 0.1))
 
 ;; emacs help
 (use-package helpful
-  :custom
-  (counsel-describe-function-function #'helpful-callable)
-  (counsel-describe-variable-function #'helpful-variable)
   :bind
-  ([remap describe-function] . counsel-describe-function)
+  ([remap describe-function] . helpful-function)
   ([remap describe-command] . helpful-command)
-  ([remap describe-variable] . counsel-describe-variable)
+  ([remap describe-variable] . helpful-variable)
   ([remap describe-key] . helpful-key))
 
 ;; org
@@ -160,7 +131,7 @@
 (use-package flycheck
   :defer t
   :diminish
-  :init (global-flycheck-mode 1))
+  :config (global-flycheck-mode 1))
 
 ;; key binds - leader
 (use-package general
@@ -173,28 +144,45 @@
 
  (cdaddr/leader-keys
    "t" '(:ignore t :which-key "toggles")
-   "x" '(counsel-M-x :which-key "M-x command"))
+   ;;"x" '(counsel-M-x :which-key "M-x command")
+   "yy" 'yas-insert-snippet)
 
 ;; lsp
-(use-package lsp-mode
-  :commands lsp
-  :config
-  (lsp-enable-which-key-integration 1))
+;; (use-package lsp-mode
+;;   :commands lsp
+;;   :config
+;;   (lsp-enable-which-key-integration 1))
 
-(use-package lsp-ivy
-  :after lsp
-  :commands lsp-ivy-workspace-symbol)
+;; (use-package lsp-ivy
+;;   :after lsp
+;;   :commands lsp-ivy-workspace-symbol)
 
 ;; text completion
 (use-package company
-  :after lsp-mode
-  :hook (lsp-mode . company-mode)
+  ;; :after lsp-mode
+  ;; :hook (lsp-mode . company-mode)
+  :init
+  (global-company-mode t)
+  (setq company-minimum-prefix-length 1)
+  (setq company-idle-delay 0.0)
+
   :bind
   (:map company-active-map ("<tab>" . company-complete-selection))
-  (:map lsp-mode-map ("<tab>" . company-indent-or-complete-common))
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
+  ;; (:map lsp-mode-map ("<tab>" . company-indent-or-complete-common))
+  )
+
+(use-package company-prescient
+  :after company
+  :config (company-prescient-mode +1))
+
+(use-package yasnippet
+  :diminish
+  :hook (prog-mode . yas-minor-mode)
+  :config
+  (yas-reload-all))
+
+(use-package yasnippet-snippets
+  :after yasnippet)
 
 ;; projects
 (use-package projectile
@@ -202,30 +190,31 @@
   :diminish projectile-mode
   :config (projectile-mode +1)
   :bind-keymap ("M-P" . projectile-command-map)
-  :init
+  :config
   (setq projectile-sort-order 'recently-active)
-  (setq projectile-project-search-path '("~/Local"))
-  ;; :init
-  ;; (let ((cdaddr/project-path "~/Local"))
-  ;;   (when (file-directory-p cdaddr/project-path)
-  ;;     (setq projectile-project-search-path cdaddr/project-path)))
-  ;; (setq projectile-switch-project-action #'projectile-dired)
-  )
+  (setq projectile-project-search-path '("~/Local")))
 
 (cdaddr/leader-keys
-  "pf" 'counsel-projectile-find-file
-  "ps" 'counsel-projectile-switch-project
-  "pg" 'counsel-projectile-rg
-  "pr" 'counsel-buffer-or-recentf)
+  "pf" 'projectile-find-file
+  "ps" 'projectile-switch-project
+  "pg" 'projectile-rg
+  "pr" 'buffer-or-recentf)
 
-(use-package counsel-projectile
-  :after projectile
-  :init
-  :config (counsel-projectile-mode 1))
+;; (use-package counsel-projectile
+;;   :after projectile
+;;   :config (counsel-projectile-mode 1))
 
 ;; color preview
 (use-package rainbow-mode
   :config (rainbow-mode 1))
+
+(use-package shackle
+  :diminish
+  :config (shackle-mode 1)
+  :custom (shackle-rules '(("\\*Apropos\\|Help\\|Occur\\*" :regexp t :same t :select t)
+			   ("\\*magit" :regexp t :same t :select t)
+			   ("\\*shell.*" :regexp t :same t :select t)
+			   ("*Messages*" :same nil :other t :select t))))
 
 ;; make UI tolerable
 (setq inhibit-startup-message t)
@@ -257,9 +246,6 @@
   (column-number-mode 1))
 (add-hook 'prog-mode-hook 'cdaddr/prog-hook)
 
-;; font
-(set-face-attribute 'default nil :font "JetBrainsMono NF" :height 148)
-
 ;; more key bindings
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
@@ -283,11 +269,16 @@
 (make-directory cdaddr/undo-path t)
 
 (setq default-directory "~/")
-(add-to-list 'exec-path "/usr/local/bin")	       '(counsel-projectile-switch-project . file-newer-than-file-p)
+(add-to-list 'exec-path "/usr/local/bin")
 
+(defun cdaddr/elisp-hook ()
+  "Emacs Lisp mode hook."
+  (local-set-key (kbd "C-c C-k") 'eval-buffer))
+(add-hook 'emacs-lisp-mode-hook 'cdaddr/elisp-hook)
 
 ;; macos-specific
 (when (string-equal system-type "darwin")
+  (set-face-attribute 'default nil :font "JetBrainsMono NF" :height 148)
   (setq mac-command-key-is-meta t)
   (setq mac-option-modifier 'super)
   (setq mac-command-modifier 'meta)
@@ -298,10 +289,9 @@
   (add-to-list 'default-frame-alist '(height . 95))
   (add-to-list 'default-frame-alist '(width . 184)))
 
-(defun cdaddr/elisp-hook ()
-  "Emacs Lisp mode hook."
-  (local-set-key (kbd "C-c C-k") 'eval-buffer))
-(add-hook 'emacs-lisp-mode-hook 'cdaddr/elisp-hook)
+;; linux-specific
+(when (string-equal system-type "gnu/linux")
+  (set-face-attribute 'default nil :font "JetBrainsMono NF" :height 110))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -309,7 +299,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(counsel-projectile org-plus-contrib borg ivy-prescient no-littering auto-package-update flycheck company lsp-ivy lsp-mode rainbow-mode projectile evil-collection which-key use-package rainbow-delimiters ivy-rich helpful github-theme general evil doom-themes doom-modeline diminish counsel command-log-mode)))
+   '(yasnippet-snippets company-prescient yasnippet ctrlf orderless selectrum-prescient selectrum shackle counsel-projectile org-plus-contrib borg ivy-prescient no-littering auto-package-update flycheck company lsp-ivy lsp-mode rainbow-mode projectile evil-collection which-key use-package rainbow-delimiters ivy-rich helpful github-theme general evil doom-themes doom-modeline diminish counsel command-log-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
