@@ -8,6 +8,25 @@
 #  cyan     6       14
 #  white    7       15
 
+# completion cache
+ZCOMP_DIR="$XDG_CACHE_HOME/zsh/"
+ZCOMP_PATH="$ZCOMP_DIR/zcompdump-$ZSH_VERSION"
+mkdir -p $ZCOMP_DIR
+
+# zinit package manager
+declare -A ZINIT
+ZINIT[HOME_DIR]=$XDG_DATA_HOME/zinit
+ZINIT[BIN_DIR]=${ZINIT[HOME_DIR]}/bin
+ZINIT[BIN_DIR]=${ZINIT[HOME_DIR]}/bin
+ZINIT[ZCOMPDUMP_PATH]=$ZCOMP_PATH
+mkdir -p $ZINIT[HOME_DIR]
+
+[[ -d ${ZINIT[BIN_DIR]} ]] || git clone https://github.com/zdharma/zinit.git ${ZINIT[BIN_DIR]}
+source "${ZINIT[BIN_DIR]}/zinit.zsh"
+
+autoload -Uz _zinit
+(( ${+_comps} )) && _comps[zinit]=_zinit
+
 # macos brew-installed coreutils
 if [[ `uname` == 'Darwin' ]]; then
     local gnubin="/usr/local/opt/coreutils/libexec/gnubin" 
@@ -23,12 +42,8 @@ if [[ ! -d "$P10K_DIR" ]]; then
 fi
 source "$P10K_DIR/powerlevel10k.zsh-theme"
 
+autoload -Uz compinit && compinit -d $ZCOMP_PATH
 autoload -Uz colors && colors
-autoload -Uz compinit && compinit
-
-ZCOMP_DIR="$XDG_CACHE_HOME/zsh/"
-compinit -d "$ZCOMP_DIR/zcompdump-$ZSH_VERSION"
-
 export extended_history
 setopt hist_ignore_dups
 setopt hist_ignore_space
@@ -121,30 +136,10 @@ fi
 #     eval "$(rbenv init -)"
 # fi
 
-source "$HOME/.zinit/bin/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
-
-### Added by Zinit's installer
-if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
-    print -P "%F{33}▓▒░ %F{220}Installing %F{33}DHARMA%F{220} Initiative Plugin Manager (%F{33}zdharma/zinit%F{220})…%f"
-    command mkdir -p "$HOME/.zinit" && command chmod g-rwX "$HOME/.zinit"
-    command git clone https://github.com/zdharma/zinit "$HOME/.zinit/bin" && \
-        print -P "%F{33}▓▒░ %F{34}Installation successful.%f%b" || \
-        print -P "%F{160}▓▒░ The clone has failed.%f%b"
-fi
-
-# Load a few important annexes, without Turbo
-# (this is currently required for annexes)
-zinit light-mode for \
-    zinit-zsh/z-a-rust \
-    zinit-zsh/z-a-as-monitor \
-    zinit-zsh/z-a-patch-dl \
-    zinit-zsh/z-a-bin-gem-node
-
 zinit load zsh-users/zsh-syntax-highlighting
+zinit load agkozak/zsh-z
 
-### End of Zinit's installer chunk
+compdef _zshz ${ZSHZ_CMD:-${_Z_CMD:-z}}
 
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=12'
 
