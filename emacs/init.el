@@ -1,9 +1,8 @@
-;; package loading
+;; package management
 (require 'package)
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-			 ("melpa-stable" . "https://stable.melpa.org/packages")
-			 ("org" . "https://orgmode.org/elpa")
-			 ("elpa" . "https://elpa.gnu.org/packages/")))
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
 
 (package-initialize)
 (unless package-archive-contents
@@ -12,16 +11,30 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-;; use-package
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-;; diminish (fade mode names in modeline)
+;; keep packages updates
+(use-package auto-package-update
+  :custom
+  (auto-package-update-interval 7)
+  (auto-package-update-prompt-before-update t)
+  (auto-package-update-hide-results t)
+  :config
+  (auto-package-update-maybe)
+  (auto-package-update-at-time "09:00"))
+
+;; fade mode names in modeline
 (use-package diminish)
 
-;; ivy (find file, switch buffer)
+;; recent files
+(use-package recentf
+  :init (recentf-mode 1))
+
+;; command completion
 (use-package ivy
   :diminish
+  :after counsel
   :bind (("C-s" . swiper)
 	 :map ivy-minibuffer-map
 	 ("C-j" . ivy-next-line)
@@ -33,25 +46,35 @@
   (ivy-mode 1)
 
   :config
-  (setq ivy-wrap t))
+  (setq ivy-wrap t)
+  (add-to-list 'ivy-sort-functions-alist
+	       '(counsel-projectile-find-file . file-newer-than-file-p)
+	       '(counsel-buffer-or-recentf . file-newer-than-file-p)))
 
+;; ivy enhancements
 (use-package ivy-rich
   :init (ivy-rich-mode 1)
   :after counsel)
 
-;; swiper (search)
-(use-package swiper
-  :diminish)
+;; custom menus
+(use-package hydra
+  :defer t)
 
-;; evil mode (vim)
+;; search
+(use-package swiper
+  :diminish
+  :bind (("C-s" . 'swiper)))
+
+;; undo for vim
 (use-package undo-tree
   :config
   (global-undo-tree-mode))
 
+;; vim
 (use-package evil
   :ensure t
   :after undo-tree
-  :init 
+  :init
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
   (setq evil-want-C-u-scroll t)
@@ -61,15 +84,16 @@
 	     (dolist (mode '(term-mode
 			     eshell-mode))
 	       (add-to-list 'evil-emacs-state-modes mode)))
-  ;;:hook (evil-mode . cdaddr/evil-hook)
 
   :config
   (evil-mode 1)
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  ;; (define-key evil-normal-state-map (kbd "/") 'swiper)
+  (define-key evil-normal-state-map (kbd "M-f") 'swiper)
   (evil-set-undo-system 'undo-tree)
-  
   (add-hook 'evil-mode-hook 'cdaddr/evil-hook))
 
+;; more vim
 (use-package evil-collection
   :after evil
   :config (evil-collection-init))
@@ -88,12 +112,13 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
-;; which-key (show commands for prefix)
+;; command preview
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
   :config (setq which-key-idle-delay 0.1))
 
+;; ivy-enhanced common commands
 (use-package counsel
   :diminish
   :bind (("M-x" . counsel-M-x)
@@ -103,11 +128,19 @@
 	 ("C-r" . counsel-minibuffer-history))
   :config (setq ivy-initial-inputs-alist nil))
 
-;; show descriptions for ivy menus
+;; ivy menu descriptions
 (use-package ivy-rich
+  :after ivy
   :init (ivy-rich-mode 1))
 
-;; helpful (emacs help)
+;; (use-package ivy-prescient
+;;   :after counsel
+;;   :custom
+;;   (ivy-prescient-enable-filtering nil)
+;;   :config
+;;   (ivy-prescient-mode 1))
+
+;; emacs help
 (use-package helpful
   :custom
   (counsel-describe-function-function #'helpful-callable)
@@ -118,24 +151,59 @@
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
 
-;; general (key bindings)
-;; FIXME
+;; org
+(use-package org
+  :ensure org-plus-contrib
+  :pin org)
+
+;; syntax checking
+(use-package flycheck
+  :defer t
+  :diminish
+  :init (global-flycheck-mode 1))
+
+;; key binds - leader
 (use-package general
  :config
+ (general-evil-setup t)
  (general-create-definer cdaddr/leader-keys
    :keymaps '(normal insert visual emacs)
    :prefix "SPC"
-   :global-prefix "C-SPC")
+   :global-prefix "C-SPC"))
 
  (cdaddr/leader-keys
    "t" '(:ignore t :which-key "toggles")
-   "x" '(counsel-M-x :which-key "M-x command")))
+   "x" '(counsel-M-x :which-key "M-x command"))
 
+;; lsp
+(use-package lsp-mode
+  :commands lsp
+  :config
+  (lsp-enable-which-key-integration 1))
+
+(use-package lsp-ivy
+  :after lsp
+  :commands lsp-ivy-workspace-symbol)
+
+;; text completion
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind
+  (:map company-active-map ("<tab>" . company-complete-selection))
+  (:map lsp-mode-map ("<tab>" . company-indent-or-complete-common))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
+
+;; projects
 (use-package projectile
+  :demand t
   :diminish projectile-mode
   :config (projectile-mode +1)
   :bind-keymap ("M-P" . projectile-command-map)
   :init
+  (setq projectile-sort-order 'recently-active)
   (setq projectile-project-search-path '("~/Local"))
   ;; :init
   ;; (let ((cdaddr/project-path "~/Local"))
@@ -144,18 +212,30 @@
   ;; (setq projectile-switch-project-action #'projectile-dired)
   )
 
+(cdaddr/leader-keys
+  "pf" 'counsel-projectile-find-file
+  "ps" 'counsel-projectile-switch-project
+  "pg" 'counsel-projectile-rg
+  "pr" 'counsel-buffer-or-recentf)
+
+(use-package counsel-projectile
+  :after projectile
+  :init
+  :config (counsel-projectile-mode 1))
+
+;; color preview
 (use-package rainbow-mode
   :config (rainbow-mode 1))
 
-(setq default-directory "~/")
-
 ;; make UI tolerable
 (setq inhibit-startup-message t)
+
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 (tooltip-mode -1)
-(set-fringe-mode 10)
 (menu-bar-mode -1)
+(set-fringe-mode 10)
+
 (setq ring-bell-function 'ignore)
 
 (defun my-terminal-visible-bell ()
@@ -163,24 +243,27 @@
   (invert-face 'mode-line)
   (run-with-timer 0.1 nil 'invert-face 'mode-line))
 
-(setq visible-bell       nil
+(setq visible-bell       t
       ring-bell-function #'my-terminal-visible-bell)
 
-;; line numbers and column numbers
-(column-number-mode)
-(global-display-line-numbers-mode t)
+;; builtins
+(setq show-trailing-whitespace t)
 
-(dolist (mode '(org-mode-hook
-		term-mode-hook
-		eshell-mode-hook))
-  (add-hook mode (lambda () (display-line-numbers-mode 0))))
+;; prog-mode
+(defun cdaddr/prog-hook ()
+  "Some prog mode hooks."
+  (display-line-numbers-mode 1)
+  (line-number-mode 1)
+  (column-number-mode 1))
+(add-hook 'prog-mode-hook 'cdaddr/prog-hook)
 
 ;; font
 (set-face-attribute 'default nil :font "JetBrainsMono NF" :height 148)
 
-;; key bindings
+;; more key bindings
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
+;; XDG
 (defconst cdaddr/cache-path (expand-file-name "emacs" (or (getenv "XDG_CACHE_HOME") "~/.cache")))
 (make-directory cdaddr/cache-path t)
 
@@ -199,6 +282,10 @@
 (setq undo-tree-auto-save-history t)
 (make-directory cdaddr/undo-path t)
 
+(setq default-directory "~/")
+(add-to-list 'exec-path "/usr/local/bin")	       '(counsel-projectile-switch-project . file-newer-than-file-p)
+
+
 ;; macos-specific
 (when (string-equal system-type "darwin")
   (setq mac-command-key-is-meta t)
@@ -211,11 +298,8 @@
   (add-to-list 'default-frame-alist '(height . 95))
   (add-to-list 'default-frame-alist '(width . 184)))
 
-(defun cdaddr/prog-hook ()
-  (line-number-mode 1))
-(add-hook 'prog-mode-hook 'cdaddr/prog-hook)
-
 (defun cdaddr/elisp-hook ()
+  "Emacs Lisp mode hook."
   (local-set-key (kbd "C-c C-k") 'eval-buffer))
 (add-hook 'emacs-lisp-mode-hook 'cdaddr/elisp-hook)
 
@@ -225,10 +309,13 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(rainbow-mode projectile evil-collection which-key use-package rainbow-delimiters ivy-rich helpful github-theme general evil doom-themes doom-modeline diminish counsel command-log-mode)))
+   '(counsel-projectile org-plus-contrib borg ivy-prescient no-littering auto-package-update flycheck company lsp-ivy lsp-mode rainbow-mode projectile evil-collection which-key use-package rainbow-delimiters ivy-rich helpful github-theme general evil doom-themes doom-modeline diminish counsel command-log-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+(provide 'init)
+;;; init.el ends here
