@@ -208,6 +208,9 @@
 (use-package rainbow-mode
   :config (rainbow-mode 1))
 
+(use-package magit
+  :defer)
+
 (use-package shackle
   :diminish
   :config (shackle-mode 1)
